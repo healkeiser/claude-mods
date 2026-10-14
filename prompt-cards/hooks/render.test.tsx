@@ -1,4 +1,5 @@
 import { expect, test } from 'claude-code/testing'
+import { pieces } from './register'
 
 const props = (kind: string, text = 'fix the band') => ({ text, origin: { kind }, isExpanded: false }) as never
 
@@ -33,4 +34,9 @@ test('a fenced block in a prompt draws as code, the prose around it as text', as
   expect(texts).toContain('ts')
   expect(texts).toContain('done')
   expect(texts.some(t => t.includes('```'))).toBe(false)
+})
+
+test('a pasted block loses its paste tags and blank edges', () => {
+  const text = '```\r\n\r\n<pasted_content id="76ce">\r\n  sudo ls\r\n</pasted_content id="76ce">\r\n\r\n  ```'
+  expect(pieces(text)).toEqual([{ text: '  sudo ls', language: '' }])
 })

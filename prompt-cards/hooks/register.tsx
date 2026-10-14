@@ -20,7 +20,9 @@ const sent = atom({ plugin: 'prompt-cards', key: 'sent' } as const, { ids: [], t
 export function pieces(text: string): { text: string; language?: string }[] {
   const out: { text: string; language?: string }[] = []
   const prose: string[] = []
-  const lines = text.split('\n')
+  // The engine wraps a paste in `<pasted_content>` tags for the model; the person
+  // never typed them, so the card leaves them out.
+  const lines = text.split(/\r?\n/).filter(l => !/^\s*<\/?pasted_content\b[^>]*>\s*$/.test(l))
   const flush = () => {
     const t = prose.join('\n').replace(/^\n+|\n+$/g, '')
     if (t) out.push({ text: t })
@@ -36,7 +38,7 @@ export function pieces(text: string): { text: string; language?: string }[] {
     let j = i + 1
     while (j < lines.length && !lines[j]!.trimStart().startsWith(open[1]!)) body.push(lines[j++]!)
     flush()
-    out.push({ text: body.join('\n'), language: open[2] ?? '' })
+    out.push({ text: body.join('\n').replace(/^(\s*\n)+|\s+$/g, ''), language: open[2] ?? '' })
     i = j
   }
   flush()
