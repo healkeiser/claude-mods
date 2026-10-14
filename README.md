@@ -41,6 +41,7 @@
   - [pretty-markdown](#pretty-markdown)
   - [working-band](#working-band)
   - [prompt-cards](#prompt-cards)
+  - [Status line](#status-line)
 - [Security](#security)
 - [Development](#development)
 - [License](#license)
@@ -58,6 +59,8 @@ Three [mods](https://claude.com/resources/articles/claude-code-mods) for [Claude
 | **pretty-markdown** | Claude's replies: bordered code blocks with a copy button, inline-code chips, coloured diffs, rounded tables, accented headings, callouts, and a highlighted `Next:` line |
 | **working-band** | The line above the prompt while Claude works, the folded tool rows, and the footer that closes each turn |
 | **prompt-cards** | Your own prompts: a blue card per prompt, a grey card while one is queued, and a `/prompts` pane to jump back to any of them |
+
+A matching [status line](#status-line) script comes alongside. It is not a mod, so it installs on its own.
 
 
 
@@ -112,6 +115,32 @@ Redraws each block of Claude's reply that has something to gain; plain prose kee
 
 > [!NOTE]
 > Colours are tuned for dark themes: the inline-code chip and the prompt card's background are fixed colours, and read as dark bands on a light theme.
+
+### Status line
+
+`statusline/statusline.sh` draws the status line as a rounded card: the model, the folder, the branch and its uncommitted changes, then one bar each for the context window and the 5-hour and 7-day limits, with their reset time and pace.
+
+```
+╭─ Opus 5.5 · claude-mods ↗ · master +5 ~4 ──────────╮
+│ ctx  ━━━━──────   42%     18m 04s  ↑ 13.7k ↓ 2.1k  │
+│ 5h   ━━━━━━────   61%   ↻ 2h 12m   17:26      1.1× │
+│ 7d   ━━━━━━━━━─   96%   ↻ 3d 5h    Sat 21:00  1.8× │
+╰────────────────────────────────────────────────────╯
+```
+
+The pace compares how fast a limit is being used with how much of its window has passed: `1.0×` finishes the window right at 100%, and above that it turns yellow, then red at `1.5×`.
+
+Copy the script into `~/.claude/` and point `statusLine` at it in `~/.claude/settings.json`:
+
+``` json
+"statusLine": {
+  "type": "command",
+  "command": "bash ~/.claude/statusline.sh"
+}
+```
+
+> [!IMPORTANT]
+> The script needs `bash`, `jq`, `git` and GNU `date`. On Windows, Git Bash brings all of them except `jq`.
 
 
 
