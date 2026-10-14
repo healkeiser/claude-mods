@@ -143,6 +143,60 @@ export function parseInline(text: string): Span[] {
   return spans
 }
 
+// shortcut: counts one cell per character, so wide glyphs (CJK, emoji) misalign
+// a column; measure display width if tables with them show up.
+export const spanWidth = (s: Span) => (s.kind === 'code' ? s.text.length + 2 : s.kind === 'link' ? s.label.length : s.text.length)
+
+// Breaks spans into lines at most `width` cells wide, at spaces where it can and
+// mid-word where a word is longer than a line. A link too long for a line loses
+// its target and wraps as text.
+export function wrapSpans(spans: Span[], width: number): Span[][] {
+  const words: { span: Span; isSpaced: boolean }[] = []
+  let isSpaced = false
+  for (const s of spans) {
+    if (s.kind !== 'text') {
+      words.push({ span: s, isSpaced })
+      isSpaced = false
+      continue
+    }
+    for (const bit of s.text.split(/(\s+)/)) {
+      if (/^\s+$/.test(bit)) isSpaced = true
+      else if (bit) {
+        words.push({ span: { ...s, text: bit }, isSpaced })
+        isSpaced = false
+      }
+    }
+  }
+
+  const chunks = (s: Span): Span[] => {
+    if (spanWidth(s) <= width) return [s]
+    const plain = s.kind === 'link' ? { kind: 'text' as const, text: s.label } : s
+    const step = Math.max(1, plain.kind === 'code' ? width - 2 : width)
+    const out: Span[] = []
+    for (let at = 0; at < plain.text.length; at += step) out.push({ ...plain, text: plain.text.slice(at, at + step) })
+    return out
+  }
+
+  const lines: Span[][] = [[]]
+  let used = 0
+  for (const word of words) {
+    chunks(word.span).forEach((piece, n) => {
+      const w = spanWidth(piece)
+      const gap = n === 0 && word.isSpaced && used > 0 ? 1 : 0
+      if (used > 0 && used + gap + w > width) {
+        lines.push([])
+        used = 0
+      } else if (gap) {
+        lines[lines.length - 1]!.push({ kind: 'text', text: ' ' })
+        used += 1
+      }
+      lines[lines.length - 1]!.push(piece)
+      used += w
+    })
+  }
+  return lines
+}
+
 // A diff fence written by hand often has no `@@` header, which Code's diff
 // format needs: add one counted from the lines, and mark bare lines as context.
 export function asHunk(source: string): string {

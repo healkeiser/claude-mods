@@ -28,7 +28,7 @@ test('a table draws its header and a column rule', async $ => {
   const texts = (await ui.findAll({ type: 'Text' })).map(t => t.text)
   expect(texts).toContain('Spot')
   // `empty` as a chip is 7 cells wide, so the second column is 7.
-  expect(texts).toContain('─────┼────────')
+  expect(texts).toContain('├──────┼─────────┤')
 })
 
 test('a table wider than the window keeps its border and narrows a column', async $ => {

@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { parse, parseInline } from './parse'
+import { parse, parseInline, wrapSpans } from './parse'
 
 test('fences become code parts with their language', () => {
   const parts = parse('Run this:\n\n```bash\nnpm test\n```\n\nDone.')
@@ -36,4 +36,11 @@ test('a bold line opens a heading over the lines under it', () => {
 test('list items keep their marker', () => {
   const [part] = parse('- run `ls`\n2. then `cd`')
   expect(part?.kind === 'lines' && part.lines.map(l => l.prefix)).toEqual(['• ', '2. '])
+})
+
+test('wrapSpans breaks at spaces and splits a word longer than a line', () => {
+  const text = (spans: ReturnType<typeof parseInline>, width: number) =>
+    wrapSpans(spans, width).map(l => l.map(s => (s.kind === 'link' ? s.label : s.text)).join(''))
+  expect(text(parseInline('the quick `brown` foxes'), 9)).toEqual(['the quick', 'brown', 'foxes'])
+  expect(text(parseInline('abcdefghij'), 4)).toEqual(['abcd', 'efgh', 'ij'])
 })

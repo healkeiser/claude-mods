@@ -2,8 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { FoldId } from '../types'
-import { asHunk, parse } from './parse'
-import type { Align, CalloutType, Line, Part, Span } from './parse'
+import { asHunk, parse, spanWidth, wrapSpans } from './parse'
+import type { CalloutType, Line, Part, Span } from './parse'
 
 const CHIP_BG = '#2f3440'
 const CHIP_FG = '#e5c07b'
@@ -22,12 +22,7 @@ const CALLOUT: Record<CalloutType, { color: string; title: string }> = {
 // Code blocks the person unfolded, by message id and block index.
 const expanded = atom({ plugin: 'pretty-markdown', key: 'expanded' } as const, [] as readonly FoldId[])
 
-// shortcut: counts one cell per character, so wide glyphs (CJK, emoji) misalign
-// a column; measure display width if tables with them show up.
-const widthOf = (list: Span[]) =>
-  list.reduce((n, s) => n + (s.kind === 'code' ? s.text.length + 2 : s.kind === 'link' ? s.label.length : s.text.length), 0)
-
-const JUSTIFY: Record<Align, 'flex-start' | 'center' | 'flex-end'> = { left: 'flex-start', center: 'center', right: 'flex-end' }
+const widthOf = (list: Span[]) => list.reduce((n, s) => n + spanWidth(s), 0)
 
 type Indexed = Part & { i: number }
 
@@ -102,25 +97,39 @@ export const register: Register = on => {
           over -= cut
         }
         if (over > 0) return <Markdown key={`t${i}`} text={part.source} />
-        const row = (cells: Span[][], at: string, isHead: boolean) => (
-          <Box key={at} flexDirection="row">
-            {cells.map((cell, k) => (
-              <Box key={`${at}.${k}`} flexDirection="row">
-                {k > 0 ? <Text dimColor>{' │ '}</Text> : null}
-                <Box width={widths[k]} flexShrink={0} justifyContent={JUSTIFY[part.align[k] ?? 'left']}>
-                  <Text color={isHead ? 'claude' : undefined} weight={isHead ? 'bold' : undefined}>
-                    {spans(cell, `${at}.${k}`)}
-                  </Text>
-                </Box>
-              </Box>
-            ))}
-          </Box>
+        // Drawn line by line, so every wrapped line carries its column rules.
+        const rule = (l: string, m: string, r: string, at: string) => (
+          <Text key={at} color="subtle">{`${l}─${widths.map(w => '─'.repeat(w)).join(`─${m}─`)}─${r}`}</Text>
         )
+        const row = (cells: Span[][], at: string, isHead: boolean) => {
+          const wrapped = cells.map((cell, k) => wrapSpans(cell, widths[k]!))
+          const height = Math.max(...wrapped.map(w => w.length))
+          return Array.from({ length: height }, (_, j) => (
+            <Text key={`${at}.${j}`} color={isHead ? 'claude' : undefined} weight={isHead ? 'bold' : undefined}>
+              {wrapped.map((lines, k) => {
+                const line = lines[j] ?? []
+                const room = widths[k]! - line.reduce((n, s) => n + spanWidth(s), 0)
+                const align = part.align[k] ?? 'left'
+                const before = align === 'right' ? room : align === 'center' ? Math.floor(room / 2) : 0
+                return (
+                  <Text key={`${at}.${j}.${k}`}>
+                    <Text color="subtle">{k === 0 ? '│ ' : ' │ '}</Text>
+                    {' '.repeat(before)}
+                    {spans(line, `${at}.${j}.${k}`)}
+                    {' '.repeat(room - before)}
+                  </Text>
+                )
+              })}
+              <Text color="subtle">{' │'}</Text>
+            </Text>
+          ))
+        }
         return (
-          <Box key={`t${i}`} flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1} alignSelf="flex-start">
+          <Box key={`t${i}`} flexDirection="column" flexShrink={0}>
+            {rule('╭', '┬', '╮', `t${i}.top`)}
             {row(part.header, `t${i}.h`, true)}
-            <Text dimColor>{widths.map(w => '─'.repeat(w)).join('─┼─')}</Text>
-            {part.rows.map((r, j) => row(r, `t${i}.${j}`, false))}
+            {part.rows.flatMap((r, j) => [rule('├', '┼', '┤', `t${i}.r${j}`), ...row(r, `t${i}.${j}`, false)])}
+            {rule('╰', '┴', '╯', `t${i}.end`)}
           </Box>
         )
       }
