@@ -110,6 +110,7 @@ Redraws each block of Claude's reply that has something to gain; plain prose kee
 - A fenced code block in a prompt draws as a grey box inside the card, with its language and syntax colours.
 - A prompt sent while Claude is still working draws as a narrow grey `⏸ queued` card until it reaches the model. A queued slash command stays queued until the turn ends, which is when Claude Code runs it.
 - `/prompts` opens a pane listing your prompts, newest first. Pick one to scroll the transcript back to it; `1` to `9` reach the nine newest.
+- It ships a `claude-mods` theme, built on the dark theme, that turns the input box border the same blue as the cards. Pick it in `/theme`.
 
 > [!NOTE]
 > Clicking a button (copy, fold, a row of the `/prompts` pane) needs Claude Code's fullscreen layout, where the terminal reports clicks. The pane's hotkeys work either way.

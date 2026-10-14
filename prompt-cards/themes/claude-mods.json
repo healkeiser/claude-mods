@@ -1,0 +1,14 @@
+{
+  "name": "claude-mods",
+  "base": "dark",
+  "overrides": {
+    "promptBorder": "#7d87c9",
+    "promptBorderShimmer": "#b1b9f9",
+    "diffAdded": "#1e3326",
+    "diffRemoved": "#3d2226",
+    "diffAddedDimmed": "#18241c",
+    "diffRemovedDimmed": "#2a1b1e",
+    "diffAddedWord": "#2e6143",
+    "diffRemovedWord": "#7a3442"
+  }
+}
