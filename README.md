@@ -107,6 +107,7 @@ Redraws each block of Claude's reply that has something to gain; plain prose kee
 ### prompt-cards
 
 - Each prompt you send draws as a blue card, so your messages stand out when you scroll.
+- A fenced code block in a prompt draws as a grey box inside the card, with its language and syntax colours.
 - A prompt sent while Claude is still working draws as a narrow grey `⏸ queued` card until it reaches the model. A queued slash command stays queued until the turn ends, which is when Claude Code runs it.
 - `/prompts` opens a pane listing your prompts, newest first. Pick one to scroll the transcript back to it; `1` to `9` reach the nine newest.
 

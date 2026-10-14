@@ -24,3 +24,13 @@ test('a task notification keeps the engine drawing', async ($, on) => {
   const ui = await $.ui.mount({ plugin: 'prompt-cards', surface: 'terminal', component: 'UserMessage', props: props('task-notification') })
   expect((await ui.findAll({ type: 'Text' })).map(t => t.text)).toEqual(['engine row'])
 })
+
+test('a fenced block in a prompt draws as code, the prose around it as text', async $ => {
+  const text = 'look:\n```ts\nconst a = 1\n```\ndone'
+  const ui = await $.ui.mount({ plugin: 'prompt-cards', surface: 'terminal', component: 'UserMessage', props: props('composer', text) })
+  const texts = (await ui.findAll({ type: 'Text' })).map(t => t.text)
+  expect(texts).toContain('look:')
+  expect(texts).toContain('ts')
+  expect(texts).toContain('done')
+  expect(texts.some(t => t.includes('```'))).toBe(false)
+})

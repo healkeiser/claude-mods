@@ -8,10 +8,40 @@ const CARD = 'suggestion'
 // shortcut: a fixed dark blue tint, made for dark themes; on a light theme it
 // reads as a dark band. Switch on the theme if a light one is ever used.
 const CARD_BG = '#1c2233'
+// A neutral grey, so a code block reads apart from the blue card around it.
+const CODE_BG = '#2a2c31'
 const PANE = 'prompts'
 
 const version = atom({ plugin: 'prompt-cards', key: 'version' } as const, 0 as PromptsVersion)
 const sent = atom({ plugin: 'prompt-cards', key: 'sent' } as const, { ids: [], turnId: null, opener: '' } as PromptsSent)
+
+// Splits a prompt into prose and fenced code, so a pasted block draws as code.
+// A fence left open runs to the end, as Markdown reads it.
+export function pieces(text: string): { text: string; language?: string }[] {
+  const out: { text: string; language?: string }[] = []
+  const prose: string[] = []
+  const lines = text.split('\n')
+  const flush = () => {
+    const t = prose.join('\n').replace(/^\n+|\n+$/g, '')
+    if (t) out.push({ text: t })
+    prose.length = 0
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const open = /^ {0,3}(`{3,}|~{3,})\s*([\w+#.-]*)/.exec(lines[i]!)
+    if (!open) {
+      prose.push(lines[i]!)
+      continue
+    }
+    const body: string[] = []
+    let j = i + 1
+    while (j < lines.length && !lines[j]!.trimStart().startsWith(open[1]!)) body.push(lines[j++]!)
+    flush()
+    out.push({ text: body.join('\n'), language: open[2] ?? '' })
+    i = j
+  }
+  flush()
+  return out
+}
 
 export const register: Register = on => {
   // The person's prompts in transcript order, as their rows were drawn. A row is
@@ -72,7 +102,7 @@ export const register: Register = on => {
     const isQueued = s.turnId !== null && firstSeen.get(e.requestId) === s.turnId && !s.ids.includes(e.requestId) &&
       e.props.text.trim() !== s.opener
 
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Code } = $.ui.resolve(e)
 
     // Queued: a grey card only as wide as its text and set in, so it never
     // reads as a sent prompt.
@@ -88,7 +118,16 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column" borderStyle="round" borderColor={CARD} backgroundColor={CARD_BG} paddingX={1}>
         <Text color={CARD} weight="bold">you</Text>
-        <Text>{e.props.text}</Text>
+        {pieces(e.props.text).map((p, k) =>
+          p.language === undefined ? (
+            <Text key={`t${k}`}>{p.text}</Text>
+          ) : (
+            <Box key={`c${k}`} flexDirection="column" borderStyle="round" borderColor="subtle" backgroundColor={CODE_BG} paddingX={1}>
+              {p.language ? <Text dimColor italic>{p.language}</Text> : null}
+              <Code source={p.text} language={p.language || undefined} />
+            </Box>
+          ),
+        )}
       </Box>
     )
   })
