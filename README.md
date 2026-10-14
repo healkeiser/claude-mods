@@ -1,5 +1,7 @@
 <div align="center">
 
+  <img src="https://cdn.simpleicons.org/claude/D97757" alt="Claude" width="96">
+
   <h3 align="center">claude-mods</h3>
 
   <p align="center">
@@ -141,6 +143,9 @@ A marketplace added from a local folder is read in place: edit a mod, run `/relo
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+> [!NOTE]
+> Claude and Claude Code are trademarks of Anthropic. These mods are an independent community project and are not affiliated with, endorsed by, or sponsored by Anthropic.
 
 
 
