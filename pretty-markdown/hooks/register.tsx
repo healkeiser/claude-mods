@@ -41,6 +41,8 @@ function sections(parts: Part[]): [Indexed | undefined, Indexed | undefined][] {
 
 export const register: Register = on => {
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
+    // Drawn for a fixed-width terminal; other surfaces keep their own look.
+    if (e.surface !== 'terminal') return next(e)
     const parts = parse(e.props.text)
     const isPlain = parts.every(p => p.kind === 'markdown')
     if (isPlain) return next(e)

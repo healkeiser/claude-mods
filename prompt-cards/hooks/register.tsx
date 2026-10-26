@@ -91,6 +91,8 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) => {
+    // Drawn for a fixed-width terminal; other surfaces keep their own look.
+    if (e.surface !== 'terminal') return next(e)
     // Only the person's own prompts: typed here, or sent from another device.
     const kind = e.props.origin.kind
     if (kind !== 'composer' && kind !== 'bridge') return next(e)

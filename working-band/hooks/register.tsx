@@ -52,6 +52,8 @@ export const register: Register = on => {
 
   // `✻ Baked for 29s · 6 tools · 2 files edited`
   on('ui.render', { component: 'TurnDuration' }, ($, e, next) => {
+    // Drawn for a fixed-width terminal; other surfaces keep their own look.
+    if (e.surface !== 'terminal') return next(e)
     if (!footers.has(e.requestId) && finished) {
       footers.set(e.requestId, finished)
       finished = null
@@ -70,6 +72,8 @@ export const register: Register = on => {
 
   // `◇ 3 reads  ·  ⌕ 2 searches`, dim, so the replies stand out.
   on('ui.render', { component: 'ToolGroup' }, ($, e, next) => {
+    // Drawn for a fixed-width terminal; other surfaces keep their own look.
+    if (e.surface !== 'terminal') return next(e)
     if (e.props.isExpanded || e.props.calls.length === 0) return next(e)
     const { Text } = $.ui.resolve(e)
     const { text, failed } = summarize(e.props.calls)
@@ -83,6 +87,8 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    // Drawn for a fixed-width terminal; other surfaces keep their own look.
+    if (e.surface !== 'terminal') return next(e)
     const a = await read($, activity)
     if (e.props.hasSurvey || !e.props.isWorking || a === null) return next(e)
 

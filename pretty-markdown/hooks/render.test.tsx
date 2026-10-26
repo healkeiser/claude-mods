@@ -26,3 +26,18 @@ test('the copy button puts the block source on the clipboard', async ($, on) => 
   await ui.press({ key: 'copy0' })
   expect(copied).toEqual(['npm test'])
 })
+
+test('the desktop keeps its own drawing', async ($, on) => {
+  // Stands in for the engine's own drawing beneath the plugin.
+  on('ui.render', { component: 'AssistantMessage' }, ($, e) => {
+    const { Text } = $.ui.resolve(e)
+    return <Text>engine row</Text>
+  })
+  const ui = await $.ui.mount({
+    plugin: 'pretty-markdown',
+    surface: 'desktop',
+    component: 'AssistantMessage',
+    props: { text: '| a | b |\n|---|---|\n| 1 | 2 |', isFirstOfReply: true },
+  })
+  expect((await ui.findAll({ type: 'Text' })).map(t => t.text)).toEqual(['engine row'])
+})
